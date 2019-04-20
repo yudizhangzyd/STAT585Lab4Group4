@@ -4,12 +4,7 @@ library(ggrepel)
 iowaliquor <- read_csv("./data/Iowa_Liquor_Sales-Story.csv")
 sampledata <- head(iowaliquor)
 
-first <- str_extract(sampledata$`Store Location`, pattern = ".*?\\(.*?\\)")
-first
-str_extract(first, "\\d+\\.\\d+")
-str_extract(first, "\\d+\\.\\d+$")
-lat <- str_replace(first, ".*?,\\s*(.*)\\)", "\\1")
-long<- str_replace(first, "\\((.*?),\\s*.*\\)", "\\1")
+
 
 # add long and lat to data
 
