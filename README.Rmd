@@ -9,6 +9,8 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggrepel)
+library(shiny)
+library(lubridate)
 ```
 
 #Read the data
@@ -113,4 +115,42 @@ storedata %>%
                    aes(label = `Store Name`)) + 
   ggtitle("Sams Club is so different")
 ```
+-Temporial:
+```{r}
+iowaliquor <- read_csv("data/Iowa_Liquor_Sales-Story.csv")
+iowaliquor <- iowaliquor %>% 
+  mutate(longlat = str_extract(`Store Location`, pattern = ".*?\\(.*?\\)"),
+         lat = as.numeric(str_replace(longlat, "\\((.*?),\\s*.*\\)", "\\1")),
+         long = as.numeric(str_replace(longlat, ".*?,\\s*(.*)\\)", "\\1"))) %>%
+  select(-longlat) %>%
+  dplyr::filter(lat < 42.3, long > -93.8) %>%
+  dplyr::filter(lat > 41.8, long < -93.2) %>%
+  mutate(City = tolower(City))
+
+iowaliquor <- iowaliquor %>% mutate(Date = lubridate::mdy(Date))%>% 
+               mutate(Date = format(as.Date(Date), "%Y"))
+
+storedatayear <- iowaliquor %>%
+  group_by(City,`Date`) %>% 
+    dplyr::filter(!is.na(`Sale (Dollars)`)) %>%
+    summarise(n = n(), 
+              volume_liters = sum(`Volume Sold (Liters)`),
+              sale_dollars = sum(`Sale (Dollars)`))%>%
+  ungroup() 
+
+ # Plot1: Ames : Sale dollars by year and city
+
+storedatayear %>% dplyr::filter(City == "ames") %>%
+    ggplot(aes(x = Date, y = sale_dollars)) +  geom_point()
+    ggtitle("Sale dollars by year and city")
+    
+    
+ # Plot2: Ames : Sale volumes by year and city
+
+storedatayear %>% dplyr::filter(City == "ames") %>%
+    ggplot(aes(x = Date, y = volume_liters)) +  geom_point()
+    ggtitle("Volumes liters by year and city")
+
+```
+
 

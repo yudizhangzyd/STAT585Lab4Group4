@@ -1,5 +1,7 @@
 library(tidyverse)
 library(ggrepel)
+library(shiny)
+library(lubridate)
 
 iowaliquor <- unzip("../data/story-sales.zip", junkpaths = T, exdir = "data")
 iowaliquor <- read_csv("../data/Iowa_Liquor_Sales-Story.csv")
@@ -26,6 +28,17 @@ storedata <- iowaliquor %>%
     ungroup() %>%
     arrange(desc(n))
 
+iowaliquor <- iowaliquor %>% mutate(Date = lubridate::mdy(Date))%>% 
+  mutate(Date = format(as.Date(Date), "%Y"))
+
+storedatayear <- iowaliquor %>%
+  group_by(City,`Date`) %>% 
+  dplyr::filter(!is.na(`Sale (Dollars)`)) %>%
+  summarise(n = n(), 
+            volume_liters = sum(`Volume Sold (Liters)`),
+            sale_dollars = sum(`Sale (Dollars)`))%>%
+  ungroup() 
+
 ui <- navbarPage(
   theme = "yeti",
   tags$title(" "),
@@ -37,10 +50,17 @@ ui <- navbarPage(
   
   tabPanel("Temporal",
            sidebarLayout(sidebarPanel(
-             ),
-           mainPanel( 
-          )
-          )),
+             selectInput("city", "City",
+                         choices = c("ames", "story city",
+                                     "nevada", "huxley",
+                                     "slater", "cambridge",
+                                     "maxwell", "colo", "roland"), 
+                         selected = "ames")),
+             mainPanel(tabsetPanel(
+               tabPanel("Sales_dollars_by_year_and_city",
+                        plotOutput("Sales_dollars_by_year_and_city")),
+               tabPanel("Sales_volume_by_year_and_city",
+                        plotOutput("Sales_volume_by_year_and_city")))))),
   
   tabPanel("Spatial",
            sidebarLayout(sidebarPanel(
@@ -66,7 +86,23 @@ ui <- navbarPage(
 
 server <- function(input, output) {
   
-  output$Stroy_County_Liquor_Sales <- renderPlot({
+  output$Sales_dollars_by_year_and_city <- renderPlot({
+    storedatayear %>% dplyr::filter(City == input$city) %>%
+      ggplot(aes(x = Date, y = sale_dollars)) + 
+      geom_point() + 
+      ggtitle(paste0(input$city, "Sale dollars by year and city"))
+    
+  })
+  
+  output$Sales_volume_by_year_and_city <- renderPlot({
+    storedatayear %>% dplyr::filter(City == input$city) %>%
+      ggplot(aes(x = Date, y = volume_liters)) + 
+      geom_point() + 
+      ggtitle(paste0(input$city, "Sale volume by year and city"))
+    
+  })
+ 
+   output$Stroy_County_Liquor_Sales <- renderPlot({
     story <- map_data("county") %>%
       dplyr::filter(subregion == "story")
     story %>%
