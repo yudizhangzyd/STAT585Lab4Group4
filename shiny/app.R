@@ -3,48 +3,16 @@ library(ggrepel)
 library(shiny)
 library(lubridate)
 
-iowaliquor <- unzip("../data/story-sales.zip", junkpaths = T, exdir = "data")
-iowaliquor <- read_csv("../data/Iowa_Liquor_Sales-Story.csv")
-
-iowaliquor <- iowaliquor %>% 
-    mutate(longlat = str_extract(`Store Location`, pattern = ".*?\\(.*?\\)"),
-           lat = as.numeric(str_replace(longlat, "\\((.*?),\\s*.*\\)", "\\1")),
-           long = as.numeric(str_replace(longlat, ".*?,\\s*(.*)\\)", "\\1"))) %>%
-    select(-longlat) %>%
-    dplyr::filter(lat < 42.3, long > -93.8) %>%
-    dplyr::filter(lat > 41.8, long < -93.2) %>%
-    mutate(City = tolower(City))
-
-storedata <- iowaliquor %>%
-    mutate(`Store Name` = tolower(`Store Name`)) %>%
-    group_by(`Store Name`) %>%
-    dplyr::filter(!is.na(`Sale (Dollars)`)) %>%
-    summarise(n = n(), 
-              volume_liters = sum(`Volume Sold (Liters)`),
-              sale_dollars = sum(`Sale (Dollars)`), 
-              long = mean(long), 
-              lat = mean(lat),
-              City = City[1]) %>%
-    ungroup() %>%
-    arrange(desc(n))
-
-iowaliquor <- iowaliquor %>% mutate(Date = lubridate::mdy(Date))%>% 
-  mutate(Date = format(as.Date(Date), "%Y"))
-
-storedatayear <- iowaliquor %>%
-  group_by(City,`Date`) %>% 
-  dplyr::filter(!is.na(`Sale (Dollars)`)) %>%
-  summarise(n = n(), 
-            volume_liters = sum(`Volume Sold (Liters)`),
-            sale_dollars = sum(`Sale (Dollars)`))%>%
-  ungroup() 
+iowaliquor <- read_rds("../data/datacleaned.rds")
+storedata <- read_rds("../data/storedata.rds")
+storedatayear <- read_rds("../data/storedatayear.rds")
 
 ui <- navbarPage(
   theme = "yeti",
   tags$title(" "),
   
   div(
-    tags$header(p("Spatial snd temporal analysis of liquor sale in Iowa", style="font-size:40px"),
+    tags$header(p("Spatial and Temporal Analysis of Liquor Sale in Iowa", style="font-size:40px"),
                 p("group 4", style="font-size:30px")),
     align = "center", style="color:#ffffff; background-color: #4d728d"),
   
