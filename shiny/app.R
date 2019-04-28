@@ -18,7 +18,7 @@ ui <- navbarPage(
   
   tabPanel("Temporal",
            sidebarLayout(sidebarPanel(
-             selectInput("city", "City",
+             selectInput("city_time", "City",
                          choices = c("ames", "story city",
                                      "nevada", "huxley",
                                      "slater", "cambridge",
@@ -55,7 +55,7 @@ ui <- navbarPage(
 server <- function(input, output) {
   
   output$Sales_dollars_by_year_and_city <- renderPlot({
-    storedatayear %>% dplyr::filter(City == input$city) %>%
+    storedatayear %>% dplyr::filter(City == input$city_time) %>%
       ggplot(aes(x = Date, y = sale_dollars)) + 
       geom_point() + 
       ggtitle(paste0(input$city, "Sale dollars by year and city"))
@@ -63,7 +63,7 @@ server <- function(input, output) {
   })
   
   output$Sales_volume_by_year_and_city <- renderPlot({
-    storedatayear %>% dplyr::filter(City == input$city) %>%
+    storedatayear %>% dplyr::filter(City == input$city_time) %>%
       ggplot(aes(x = Date, y = volume_liters)) + 
       geom_point() + 
       ggtitle(paste0(input$city, "Sale volume by year and city"))
